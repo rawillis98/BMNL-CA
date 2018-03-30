@@ -81,27 +81,36 @@ void loop() {
 
     float iavg = chronoamp();
 
-    if (req.indexOf("Basline") != -1) {
+    if (req.indexOf("Baseline") != -1) {
       baseline_iavg = iavg; //set the baseline
+      s += "<p class =\"results\">Baseline measurement taken.</p><br>";
+      digitalWrite(nitrogen, HIGH);
+      digitalWrite(carbondioxide, LOW);
 
     } else if (req.indexOf("CO2") != - 1) { //if we're taking a CO2 measurement,
-      if (baseline_iavg = -1) { //if a baseline hasn't been taken yet
+      if (baseline_iavg == -1) { //if a baseline hasn't been taken yet
         s += "<p class =\"results\">A baseline measurement has not been taken yet.</p><br>";
         Serial.println("A basline measurement has not been taken yet.");
+        digitalWrite(nitrogen, LOW);
+        digitalWrite(carbondioxide, LOW);
       } else if (iavg > baseline_iavg * pc_co2) { //if a baseline has been taken, and iavg is bigger than the percent change * the baseline
         s += "<p class =\"results\">[CO<sub>2</sub>]: 1000ppm</p><br>";
         Serial.println("1000ppm");
+        digitalWrite(nitrogen, LOW);
         digitalWrite(carbondioxide, HIGH);
       } else { //if iavg is not bigger, write 0 ppm
         s += "<p class =\"results\">[CO<sub>2</sub>]: 0ppm</p><br>";
+        Serial.println("0ppm");
         digitalWrite(nitrogen, HIGH);
         digitalWrite(carbondioxide, LOW);
       }
 
     } else if (req.indexOf("Breath") != -1) {
-      if (baseline_iavg = -1) { //if a baseline hasn't been taken yet
+      if (baseline_iavg == -1) { //if a baseline hasn't been taken yet
         s += "<p class =\"results\">A baseline measurement has not been taken yet.</p><br>";
         Serial.println("A basline measurement has not been taken yet.");
+        digitalWrite(carbondioxide, LOW);
+        digitalWrite(nitrogen, LOW);
       } else if (iavg > baseline_iavg * pc_breath) { //if a baseline has been taken, and iavg is bigger than the percent change * the baseline
         s += "<p class =\"results\">[CO<sub>2</sub>]: 10,000 - 20,000ppm</p><br>";
         Serial.println("10,000 - 20,000ppm");
@@ -114,13 +123,14 @@ void loop() {
       }
 
     }
+  } else {
+    s += "<p class =\"results\">Welcome</p><br>";
   }
-
 
   //add links to next step
   s += "</div><a href=\"http://192.168.4.1/readBaseline\">Take Baseline Measurement</a><br>";
   s += "<a href=\"http://192.168.4.1/readCO2\">Take 1000ppm Measurement</a><br>";
-  s += "<a href=\"http://192.168.4.1/readCO2\">Take Breath Measurement</a>";
+  s += "<a href=\"http://192.168.4.1/readBreath\">Take Breath Measurement</a>";
   s += "</html>\n";
 
   client.print(s);
