@@ -9,7 +9,6 @@ const int sensorPin = A10; //Pin P9.2
 //Global variables
 int previousButtonState = 1;
 int buttonState = 1;
-
 int previousButtonState1 = 1;
 int buttonState1 = 1;
 LCD_LAUNCHPAD myLCD;
@@ -81,7 +80,7 @@ void loop() {
   previousButtonState1 = buttonState1;
   buttonState1 = digitalRead(buttonPin1);
 
-  if ((previousButtonState1 == 0) && (buttonState1 == 1)) {
+  if ((previousButtonState1 == 0) && (buttonState1 == 1)) {//take baseline
     baseline = chronoamp();
     baseline.displayiavg();
     Serial.print("Baseline: ");
@@ -89,7 +88,7 @@ void loop() {
   }
 
 
-  if ((previousButtonState == 0) && (buttonState == 1)) {
+  if ((previousButtonState == 0) && (buttonState == 1)) {//take measurement
     Results result = chronoamp();
     double iavg = result.getiavg();
     double base = baseline.getiavg();
