@@ -67,7 +67,8 @@ void setup() {
   Serial.begin(115200);
   // Get baseline
   baseline = chronoamp();
-  baseline.displayiavg();
+  myLCD.displayScrollText("baseline taken", 250);
+  //baseline.displayiavg();
   Serial.print("Baseline: ");
   Serial.println(baseline.getiavg());
 }
@@ -82,7 +83,7 @@ void loop() {
 
   if ((previousButtonState1 == 0) && (buttonState1 == 1)) {//take baseline
     baseline = chronoamp();
-    baseline.displayiavg();
+    myLCD.displayScrollText("baseline taken", 250);
     Serial.print("Baseline: ");
     Serial.println(baseline.getiavg());
   }
@@ -96,27 +97,27 @@ void loop() {
 
 
     if (iavg > base * 1.2) {
-      myLCD.displayText("1.2");
+      myLCD.displayText("+4000ppm");
       delay(1000);
       myLCD.clear();
     } else if (iavg > base * 1.15) {
-      myLCD.displayText("1.15");
+      myLCD.displayText("3000ppm");
       delay(1000);
       myLCD.clear();
     } else if (iavg > base * 1.1) {
-      myLCD.displayText("1.1");
+      myLCD.displayText("2000ppm");
       delay(1000);
       myLCD.clear();
     } else if (iavg > base * 1.05) {
-      myLCD.displayText("1.05");
+      myLCD.displayText("1000ppm");
       delay(1000);
       myLCD.clear();
     }  else if (iavg > base) {
-      myLCD.displayText("1");
+      myLCD.displayText("500ppm");
       delay(1000);
       myLCD.clear();
     } else if (iavg < base) {
-      myLCD.displayText("0");
+      myLCD.displayText("400ppm");
       delay(1000);
       myLCD.clear();
     }
