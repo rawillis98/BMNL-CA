@@ -2,15 +2,12 @@
 
 //Pin Definitions
 const int buttonPin = PUSH2;
-const int buttonPin1 = PUSH1;
 const int potential = 40;
 const int sensorPin = A10; //Pin P9.2
 
 //Global variables
 int previousButtonState = 1;
 int buttonState = 1;
-int previousButtonState1 = 1;
-int buttonState1 = 1;
 LCD_LAUNCHPAD myLCD;
 
 class Results {
@@ -18,9 +15,9 @@ class Results {
     double iavg;
 
   public:
-    Results() {
-      iavg = 0;
-    }
+  Results(){
+    iavg = 0;
+  }
     void printiavg() {
       Serial.print("iavg: ");
       Serial.println(iavg);
@@ -29,8 +26,8 @@ class Results {
       iavg = val;
     }
 
-    float getConcentration() {
-      return exp((iavg - 1114) / 89.208);
+    float getConcentration(){
+      return exp((iavg - 1114)/89.208);
     }
 
     double getiavg() {
@@ -49,80 +46,35 @@ class Results {
       }
     }
 
-    void displayiavg() {
+    void displayiavg(){
       myLCD.clear();
-      myLCD.displayText(String(int(iavg)));
       delay(1000);
+      myLCD.displayText(String(int(iavg)));
     }
 };
 
 Results baseline = Results();
+Results previousResult = Results();
 
 void setup() {
   myLCD.init();
   pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(buttonPin1, INPUT_PULLUP);
   pinMode(potential, OUTPUT);
   pinMode(sensorPin, INPUT);
   Serial.begin(115200);
   // Get baseline
-  baseline = chronoamp();
-  baseline.displayiavg();
-  Serial.print("Baseline: ");
-  Serial.println(baseline.getiavg());
+  //baseline = chronoamp();
 }
 
 void loop() {
   digitalWrite(potential, LOW);
-  previousButtonState = buttonState;
-  buttonState = digitalRead(buttonPin);
+  delay(3 * 1000);
+  Results result = chronoamp();
+  result.displayiavg();
+  Serial.println(result.getiavg());
+  //Serial.println((result.getiavg()+previousResult.getiavg())/2);
 
-  previousButtonState1 = buttonState1;
-  buttonState1 = digitalRead(buttonPin1);
-
-  if ((previousButtonState1 == 0) && (buttonState1 == 1)) {//take baseline
-    baseline = chronoamp();
-    baseline.displayiavg();
-    Serial.print("Baseline: ");
-    Serial.println(baseline.getiavg());
-  }
-
-
-  if ((previousButtonState == 0) && (buttonState == 1)) {//take measurement
-    Results result = chronoamp();
-    double iavg = result.getiavg();
-    double base = baseline.getiavg();
-
-
-
-    if (iavg > base * 1.2) {
-      myLCD.displayText("1.2");
-      delay(1000);
-      myLCD.clear();
-    } else if (iavg > base * 1.15) {
-      myLCD.displayText("1.15");
-      delay(1000);
-      myLCD.clear();
-    } else if (iavg > base * 1.1) {
-      myLCD.displayText("1.1");
-      delay(1000);
-      myLCD.clear();
-    } else if (iavg > base * 1.05) {
-      myLCD.displayText("1.05");
-      delay(1000);
-      myLCD.clear();
-    }  else if (iavg > base) {
-      myLCD.displayText("1");
-      delay(1000);
-      myLCD.clear();
-    } else if (iavg < base) {
-      myLCD.displayText("0");
-      delay(1000);
-      myLCD.clear();
-    }
-    Serial.println(iavg);
-  }
-
+  previousResult = result;
 }
 
 double fmap(double x, double input_min, double input_max, double output_min, double output_max) {
@@ -131,7 +83,7 @@ double fmap(double x, double input_min, double input_max, double output_min, dou
 
 Results chronoamp() {
   //Chronoamp settings
-  bool verbose = false;
+  bool verbose = true;
   int measurementDuration = 200;
   int averageDuration = 150;
   digitalWrite(potential, LOW);
@@ -142,9 +94,7 @@ Results chronoamp() {
   long unsigned int lastTime = 0;
   long unsigned int thisTime = 0;
   digitalWrite(potential, HIGH);
-  int i = 0;
   while (startTime + measurementDuration > millis()) {
-    ++i;
     double v = analogRead(sensorPin);
     currentTime = millis();
     thisTime = currentTime - startTime;
