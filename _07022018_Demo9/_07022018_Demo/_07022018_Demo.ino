@@ -67,10 +67,11 @@ void setup() {
   Serial.begin(115200);
   // Get baseline
   baseline = chronoamp();
-  myLCD.displayScrollText("baseline taken", 250);
-  //baseline.displayiavg();
   Serial.print("Baseline: ");
   Serial.println(baseline.getiavg());
+  myLCD.displayScrollText("baseline taken", 250);
+  //baseline.displayiavg();
+  
 }
 
 void loop() {
@@ -83,9 +84,10 @@ void loop() {
 
   if ((previousButtonState1 == 0) && (buttonState1 == 1)) {//take baseline
     baseline = chronoamp();
-    myLCD.displayScrollText("baseline taken", 250);
     Serial.print("Baseline: ");
     Serial.println(baseline.getiavg());
+    myLCD.displayScrollText("baseline taken", 250);
+
   }
 
 
@@ -93,35 +95,29 @@ void loop() {
     Results result = chronoamp();
     double iavg = result.getiavg();
     double base = baseline.getiavg();
+    String concentration = "";
 
-
-
-    if (iavg > base * 1.2) {
-      myLCD.displayText("+4000ppm");
-      delay(1000);
-      myLCD.clear();
-    } else if (iavg > base * 1.15) {
-      myLCD.displayText("3000ppm");
-      delay(1000);
-      myLCD.clear();
-    } else if (iavg > base * 1.1) {
-      myLCD.displayText("2000ppm");
-      delay(1000);
-      myLCD.clear();
+    
+    ////////////////////////// "CALIBRATION CURVE" ////////////////////////////
+    if (iavg > base * 1.15) {
+      concentration = "6000ppm";
+    } else if (iavg > base * 1.12) {
+      concentration = "4000ppm";
+    } else if (iavg > base * 1.09) {
+      concentration = "2000ppm";
     } else if (iavg > base * 1.05) {
-      myLCD.displayText("1000ppm");
-      delay(1000);
-      myLCD.clear();
+      concentration = "1000ppm";
     }  else if (iavg > base) {
-      myLCD.displayText("500ppm");
-      delay(1000);
-      myLCD.clear();
+      concentration = "500ppm";
     } else if (iavg < base) {
-      myLCD.displayText("400ppm");
-      delay(1000);
-      myLCD.clear();
+      concentration = "400ppm";
     }
+    
+    myLCD.displayText(concentration);
     Serial.println(iavg);
+    Serial.println(concentration);
+    delay(2000);
+    myLCD.clear();
   }
 
 }
