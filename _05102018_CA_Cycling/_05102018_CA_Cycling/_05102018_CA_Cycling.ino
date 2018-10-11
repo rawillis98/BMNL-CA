@@ -11,7 +11,7 @@ const int green = 37;//Pin P3.6
 
 //Settings
 const bool verbose = false;
-const bool N2 = false;
+const bool N2 = true;
 const bool CO2 = true;
 const int measurementDuration = 20; //how many miliseconds to measure current for during the chronoamp measurement
 const int averageDuration = 10; //how many miliseconds of data over to get the time-averaged current for a chronoamp measurement
@@ -20,6 +20,10 @@ const int BASELINE_LIST_LENGTH = 100; //The length of the moving median used to 
 
 const int yellowPoint = 2000; //The concentration at which the LED (should) display completely yellow and start decreasing green and increasing red
 const int redPoint = 4000;//The concentration after which the LED is entirely red
+
+const int first_scroll_delay = 600; //when text longer than 6 characters is displayed, it waits <-- this much before starting to scroll
+const int next_scroll_delay = 250; //when text longer than 6 characters is displayed, it waits <-- this long inbetween scrolls
+
 
 //Global variables
 int previousButtonState = 1;
@@ -41,9 +45,9 @@ void displayText(String output) { //pass a string to make the LCD display say an
       Serial.println(tempOutput);
       myLCD.displayText(tempOutput);
       if (i == 0) {
-        delay(600);
+        delay(first_scroll_delay);
       } else {
-        delay(250);
+        delay(next_scroll_delay);
       }
     }
   }
@@ -56,11 +60,11 @@ void setLED(float concentration) {
     r = 0;
     g = 0;
     b = 0;
-  } else if (concentration < 2000) {
+  } else if (concentration < yellowPoint) {
     r = int((concentration - 400) * 250 / (yellowPoint - 400));
     g = 250;
     b = 0;
-  } else if (concentration < 4000) {
+  } else if (concentration < redPoint) {
     r = 250;
     g = int(250 - (concentration - 2000) * 200 / (redPoint - yellowPoint));
     b = 0;
@@ -75,6 +79,11 @@ void setLED(float concentration) {
   return;
 }
 
+typedef struct{
+  String name;
+  float concentration;
+} Gas;
+
 float getConcentration(float baseline, float iavg) {
   String CO2_output = "";
   String N2_output = "";
@@ -85,33 +94,41 @@ float getConcentration(float baseline, float iavg) {
   } else {
     concentration = 100 * pc + 500;
   }
-  if (CO2) {
-    CO2_output = "CO2 " + String(round(concentration)) + "ppm";
-    if (concentration < 400) {
-      CO2_output = "CO2 <400 ppm";
-    }
-    setLED(concentration);
-  }
 
-  if (N2) {
-    if (concentration > 6000) {
-      N2_output = "N2 1500";
-    } else if (concentration > 4000) {
-      N2_output = "N2 1000";
-    } else if (concentration > 2000) {
-      N2_output = "N2 500";
-    } else {
-      N2_output = "N2 100";
-    }
-    N2_output += "ppm";
-    if (N2 and !CO2) {
-      concentration = 0;
-    }
-  }
-  String output = CO2_output + " " + N2_output;
+  //concentration is the CO2 concentration
+  //assign the following variables to the concentration of each gas
+  Gas gasses[9];
 
+  //name the gasses here
+  gasses[0].name = "gas a";
+  gasses[1].name = "gas b";
+  gasses[2].name = "gas c";
+  gasses[3].name = "gas d";
+  gasses[4].name = "gas e";
+  gasses[5].name = "gas f";
+  gasses[6].name = "gas g";
+  gasses[7].name = "gas h";
+  gasses[8].name = "gas i";
+  
+  //put formulas for gas concentrations as a function of CO2 concentration here
+  gasses[0].concentration = concentration;
+  gasses[1].concentration = 1 * concentration;
+  gasses[2].concentration = 2 * concentration;
+  gasses[3].concentration = 3 * concentration;
+  gasses[4].concentration = 4 * concentration;
+  gasses[5].concentration = 5 * concentration;
+  gasses[6].concentration = 6 * concentration;
+  gasses[7].concentration = 7 * concentration;
+  gasses[8].concentration = 8 * concentration;
+
+  String output = "";
+  for (int i = 0; i < 9; ++i) {
+    output = gasses[i].name + " " + String(int(gasses[i].concentration));
+    myLCD.clear();
+    displayText(output);
+    delay(500);
+  }
   myLCD.clear();
-  displayText(output);
   return concentration;
 }
 
@@ -315,7 +332,6 @@ void setup() {
 
 void loop() {
   digitalWrite(potential, LOW);
-  delay(3000);
   baselineData.appendToFront(chronoamp());
 
   if (baselineData[2] != 0) {
