@@ -2,8 +2,8 @@
 
 //Pin Definitions
 const int buttonPin = PUSH2;
-const int potential = 40; //Pin P2.7
-const int sensorPin = A10; //Pin P9.2
+const int potential = 40; //Pin P2.7, chronoamp square wave pulse
+const int sensorPin = A10; //Pin P9.2, output from PCB to MSP
 
 const int red = 39; //Pin P2.6
 const int blue = 38;//Pin P3.3
@@ -11,6 +11,8 @@ const int green = 37;//Pin P3.6
 
 //Settings
 const bool verbose = false;
+const bool N2 = false;
+const bool CO2 = true;
 const int measurementDuration = 20; //how many miliseconds to measure current for during the chronoamp measurement
 const int averageDuration = 10; //how many miliseconds of data over to get the time-averaged current for a chronoamp measurement
 
@@ -24,12 +26,12 @@ int previousButtonState = 1;
 int buttonState = 1;
 LCD_LAUNCHPAD myLCD;
 
-void displayText(String output) {
+void displayText(String output) { //pass a string to make the LCD display say anything, will scroll if necessary
   int displayLength = 6;
   if (output.length() <= displayLength) {
     myLCD.displayText(output);
   } else {
-    for (int i = 0; i < output.length()-displayLength+1; ++i) {
+    for (int i = 0; i < output.length() - displayLength + 1; ++i) {
       String tempOutput = "";
       for (int j = 0; j < displayLength; ++j) {
         if ((i + j) <= output.length()) {
@@ -38,7 +40,7 @@ void displayText(String output) {
       }
       Serial.println(tempOutput);
       myLCD.displayText(tempOutput);
-      if(i == 0){
+      if (i == 0) {
         delay(600);
       } else {
         delay(250);
@@ -74,21 +76,42 @@ void setLED(float concentration) {
 }
 
 float getConcentration(float baseline, float iavg) {
-  float pc = round((iavg - baseline) * 100 / baseline);
+  String CO2_output = "";
+  String N2_output = "";
   float concentration;
+  float pc = round((iavg - baseline) * 100 / baseline);
   if (iavg < baseline) {
     concentration = 20 * pc + 500;
   } else {
     concentration = 100 * pc + 500;
   }
-  String output = String(round(concentration)) + "ppm";
-  if (concentration < 400) {
-    output = "<400 ppm";
+  if (CO2) {
+    CO2_output = "CO2 " + String(round(concentration)) + "ppm";
+    if (concentration < 400) {
+      CO2_output = "CO2 <400 ppm";
+    }
+    setLED(concentration);
   }
+
+  if (N2) {
+    if (concentration > 6000) {
+      N2_output = "N2 1500";
+    } else if (concentration > 4000) {
+      N2_output = "N2 1000";
+    } else if (concentration > 2000) {
+      N2_output = "N2 500";
+    } else {
+      N2_output = "N2 100";
+    }
+    N2_output += "ppm";
+    if (N2 and !CO2) {
+      concentration = 0;
+    }
+  }
+  String output = CO2_output + " " + N2_output;
 
   myLCD.clear();
   displayText(output);
-  setLED(concentration);
   return concentration;
 }
 
@@ -233,9 +256,9 @@ double fmap(double x, double input_min, double input_max, double output_min, dou
 
 float chronoamp() {
   //Chronoamp settings
-  
 
-  
+
+
   digitalWrite(potential, LOW);
   delay(500);
   double iavg = 0;
@@ -288,7 +311,6 @@ void setup() {
   baselineData.appendToFront(initial);
   baseline = baselineData.getBaseline();
   setLED(400);
-  displayText("abcdefghi");
 }
 
 void loop() {
