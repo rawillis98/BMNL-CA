@@ -12,21 +12,78 @@ LCD_LAUNCHPAD myLCD;
 
 const int BASELINE_LIST_LENGTH = 100;
 
+const int yellowPoint = 2000;
+const int redPoint = 4000;
+
+const int red = 39;
+const int blue = 38;
+const int green = 37;
+
+void displayText(String output) {
+  int displayLength = 6;
+  if (output.length() <= displayLength) {
+    myLCD.displayText(output);
+  } else {
+    for (int i = 0; i < output.length()-displayLength+1; ++i) {
+      String tempOutput = "";
+      for (int j = 0; j < displayLength; ++j) {
+        if ((i + j) <= output.length()) {
+          tempOutput += output.charAt(i + j);
+        }
+      }
+      Serial.println(tempOutput);
+      myLCD.displayText(tempOutput);
+      if(i == 0){
+        delay(600);
+      } else {
+        delay(250);
+      }
+    }
+  }
+}
+
+
+void setLED(float concentration) {
+  int r, g, b;
+  if (concentration == -1.0) {
+    r = 0;
+    g = 0;
+    b = 0;
+  } else if (concentration < 2000) {
+    r = int((concentration - 400) * 250 / (yellowPoint - 400));
+    g = 250;
+    b = 0;
+  } else if (concentration < 4000) {
+    r = 250;
+    g = int(250 - (concentration - 2000) * 200 / (redPoint - yellowPoint));
+    b = 0;
+  } else {
+    r = 250;
+    g = 50;
+    b = 0;
+  }
+  analogWrite(red, r);
+  analogWrite(green, g);
+  analogWrite(blue, b);
+  return;
+}
+
 float getConcentration(float baseline, float iavg) {
   float pc = round((iavg - baseline) * 100 / baseline);
   float concentration;
-  if(iavg < baseline){
-    concentration = 20*pc + 500;
+  if (iavg < baseline) {
+    concentration = 20 * pc + 500;
   } else {
-    concentration = 60*pc + 500;
+    concentration = 100 * pc + 500;
   }
   String output = String(round(concentration)) + "ppm";
-  if(concentration < 400){
-    output = "<400ppm";
+  if (concentration < 400) {
+    output = "<400 ppm";
   }
-  
+
   myLCD.clear();
-  myLCD.displayText(output);
+  displayText(output);
+  setLED(concentration);
   return concentration;
 }
 
@@ -123,27 +180,27 @@ class CoolList {
       int medianPos;
       bubbleSort(myMedianArray, actualArrayLength);
       int maxElement = -1;
-      
+
       float c = 1.1;
       /*Serial.print("Current Baseline*c: ");
-      Serial.println(currentBaseline*c);
-      Serial.print("actualArrayLength: ");
-      Serial.println(actualArrayLength);*/
-      for(int i = 0; i < actualArrayLength; ++i){
+        Serial.println(currentBaseline*c);
+        Serial.print("actualArrayLength: ");
+        Serial.println(actualArrayLength);*/
+      for (int i = 0; i < actualArrayLength; ++i) {
         maxElement = i;
-        if(myMedianArray[i] > currentBaseline * c){
+        if (myMedianArray[i] > currentBaseline * c) {
           break;
         }
         /*Serial.print(i);
-        Serial.print(", ");
-        Serial.print(myMedianArray[i]);
-        Serial.print(", ");*/
-        
+          Serial.print(", ");
+          Serial.print(myMedianArray[i]);
+          Serial.print(", ");*/
+
       }
-      if(maxElement == -1){
+      if (maxElement == -1) {
         return currentBaseline;
       }
-        
+
       if (maxElement % 2 == 0) {
         medianPos = int(maxElement / 2) - 1;
         median = myMedianArray[medianPos] + myMedianArray[medianPos + 1];
@@ -153,14 +210,14 @@ class CoolList {
         median = myMedianArray[medianPos];
       }
       /*Serial.println();
-      Serial.print("maxElement: ");
-      Serial.println(maxElement);
-      Serial.print("medianPos: ");
-      Serial.println(medianPos);
-      Serial.print("Median: " );
-      Serial.print(median);
-      Serial.println();
-      Serial.println();*/
+        Serial.print("maxElement: ");
+        Serial.println(maxElement);
+        Serial.print("medianPos: ");
+        Serial.println(medianPos);
+        Serial.print("Median: " );
+        Serial.print(median);
+        Serial.println();
+        Serial.println();*/
       return median;
     }
 };
@@ -187,8 +244,8 @@ float chronoamp() {
     currentTime = millis();
     thisTime = currentTime - startTime;
     if (verbose) {
-      Serial.print(thisTime);
-      Serial.print(", ");
+      //Serial.print(thisTime);
+      //Serial.print(", ");
       Serial.println(v);
     }
     if ((startTime + averageDuration) > currentTime) {
@@ -222,9 +279,11 @@ void setup() {
   float initial = chronoamp();
   /*for(int i = 0; i < int(BASELINE_LIST_LENGTH/4); ++i){
     baselineData.appendToFront(initial);
-  }*/
+    }*/
   baselineData.appendToFront(initial);
   baseline = baselineData.getBaseline();
+  setLED(400);
+  displayText("abcdefghi");
 }
 
 void loop() {
@@ -234,11 +293,11 @@ void loop() {
 
   if (baselineData[2] != 0) {
     /*bool smallOneThree = abs(baselineData[2] - baselineData[0]) / baselineData[2] < 0.05; //the change between the most recent baselineData point and the one before the previous one should be relatively small
-    bool largeOneTwo = abs(baselineData[1] - baselineData[0]) / baselineData[0] > 0.06; //the change between the most recent data point and the previous one should be relatively large*/
+      bool largeOneTwo = abs(baselineData[1] - baselineData[0]) / baselineData[0] > 0.06; //the change between the most recent data point and the previous one should be relatively large*/
 
-    bool largeOneTwo = abs(baselineData[2] - baselineData[1])/baselineData[2] > 0.05;
+    bool largeOneTwo = abs(baselineData[2] - baselineData[1]) / baselineData[2] > 0.05;
     bool down = baselineData[1] > baselineData[0];
-    bool largeDown = (abs(baselineData[1]-baselineData[0])/baselineData[1]) > 0.05;
+    bool largeDown = (abs(baselineData[1] - baselineData[0]) / baselineData[1]) > 0.05;
     if (largeOneTwo and largeDown and down or (not largeOneTwo and not down and not largeDown)) {
       //spike
       baselineData.copyElements(2, 1);
@@ -248,16 +307,16 @@ void loop() {
 
     //the output data stream is data[1]
     baseline = baselineData.getBaseline(baseline);
-    if(((baselineData[1]-baseline)/baseline) < -0.05){
-      for(int i = 1; i < 3; ++i){
+    if (((baselineData[1] - baseline) / baseline) < -0.05) {
+      for (int i = 1; i < 3; ++i) {
         baselineData.copyElements(2, BASELINE_LIST_LENGTH - i);
       }
     }
-    /*Serial.print(baselineData[1]);
+    Serial.print(baselineData[1]);
     Serial.print(",");
     Serial.print(baseline);
-    Serial.print(",");*/
-    Serial.println((baselineData[1]-baseline)*100/baseline);
+    Serial.print(",");
+    Serial.println((baselineData[1] - baseline) * 100 / baseline);
     float concentration = getConcentration(baseline, baselineData[1]);
   }
 
