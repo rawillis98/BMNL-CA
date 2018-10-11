@@ -2,22 +2,27 @@
 
 //Pin Definitions
 const int buttonPin = PUSH2;
-const int potential = 40;
+const int potential = 40; //Pin P2.7
 const int sensorPin = A10; //Pin P9.2
+
+const int red = 39; //Pin P2.6
+const int blue = 38;//Pin P3.3
+const int green = 37;//Pin P3.6
+
+//Settings
+const bool verbose = false;
+const int measurementDuration = 20; //how many miliseconds to measure current for during the chronoamp measurement
+const int averageDuration = 10; //how many miliseconds of data over to get the time-averaged current for a chronoamp measurement
+
+const int BASELINE_LIST_LENGTH = 100; //The length of the moving median used to calculate the baseline
+
+const int yellowPoint = 2000; //The concentration at which the LED (should) display completely yellow and start decreasing green and increasing red
+const int redPoint = 4000;//The concentration after which the LED is entirely red
 
 //Global variables
 int previousButtonState = 1;
 int buttonState = 1;
 LCD_LAUNCHPAD myLCD;
-
-const int BASELINE_LIST_LENGTH = 100;
-
-const int yellowPoint = 2000;
-const int redPoint = 4000;
-
-const int red = 39;
-const int blue = 38;
-const int green = 37;
 
 void displayText(String output) {
   int displayLength = 6;
@@ -228,9 +233,9 @@ double fmap(double x, double input_min, double input_max, double output_min, dou
 
 float chronoamp() {
   //Chronoamp settings
-  bool verbose = false;
-  int measurementDuration = 20;
-  int averageDuration = 10;
+  
+
+  
   digitalWrite(potential, LOW);
   delay(500);
   double iavg = 0;
