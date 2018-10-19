@@ -110,7 +110,7 @@ float getConcentration(float baseline, float iavg) {
   gasses[7].name = "gas h";
   gasses[8].name = "gas i";
   
-  //put formulas for gas concentrations as a function of CO2 concentration here
+  //put formulas for gas concentrations as a function of CO2 concentration here <-- Devang change here
   gasses[0].concentration = concentration;
   gasses[1].concentration = 1 * concentration;
   gasses[2].concentration = 2 * concentration;
