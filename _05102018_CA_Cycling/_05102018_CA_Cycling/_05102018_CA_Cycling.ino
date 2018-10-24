@@ -11,8 +11,6 @@ const int green = 37;//Pin P3.6
 
 //Settings
 const bool verbose = false;
-const bool N2 = false;
-const bool CO2 = true;
 const int measurementDuration = 20; //how many miliseconds to measure current for during the chronoamp measurement
 const int averageDuration = 10; //how many miliseconds of data over to get the time-averaged current for a chronoamp measurement
 
@@ -38,7 +36,6 @@ void displayText(String output) { //pass a string to make the LCD display say an
           tempOutput += output.charAt(i + j);
         }
       }
-      Serial.println(tempOutput);
       myLCD.displayText(tempOutput);
       if (i == 0) {
         delay(600);
@@ -77,41 +74,26 @@ void setLED(float concentration) {
 
 float getConcentration(float baseline, float iavg) {
   String CO2_output = "";
-  String N2_output = "";
   float concentration;
   float pc = round((iavg - baseline) * 100 / baseline);
   if (iavg < baseline) {
     concentration = 20 * pc + 500;
   } else {
-    concentration = 100 * pc + 500;
+    concentration = 60 * pc + 500;
   }
-  if (CO2) {
-    CO2_output = "CO2 " + String(round(concentration)) + "ppm";
-    if (concentration < 400) {
-      CO2_output = "CO2 <400 ppm";
-    }
-    setLED(concentration);
+  
+  if (concentration < 400) {
+    concentration = 400;
+  } else if (concentration > 15000){
+    concentration = 15000;
   }
+  CO2_output = String(round(concentration));
+  setLED(concentration);
 
-  if (N2) {
-    if (concentration > 6000) {
-      N2_output = "N2 1500";
-    } else if (concentration > 4000) {
-      N2_output = "N2 1000";
-    } else if (concentration > 2000) {
-      N2_output = "N2 500";
-    } else {
-      N2_output = "N2 100";
-    }
-    N2_output += "ppm";
-    if (N2 and !CO2) {
-      concentration = 0;
-    }
-  }
-  String output = CO2_output + " " + N2_output;
+  String output = CO2_output + "ppm";
 
   myLCD.clear();
-  displayText(output);
+  myLCD.displayText(output);
   return concentration;
 }
 
@@ -299,18 +281,19 @@ CoolList baselineData = CoolList();
 float baseline;
 
 void setup() {
+  
   myLCD.init();
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(potential, OUTPUT);
   pinMode(sensorPin, INPUT);
   Serial.begin(115200);
+  setLED(400);
   float initial = chronoamp();
   /*for(int i = 0; i < int(BASELINE_LIST_LENGTH/4); ++i){
     baselineData.appendToFront(initial);
     }*/
   baselineData.appendToFront(initial);
   baseline = baselineData.getBaseline();
-  setLED(400);
 }
 
 void loop() {
