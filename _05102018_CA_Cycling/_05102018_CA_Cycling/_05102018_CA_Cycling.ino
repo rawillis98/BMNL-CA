@@ -10,8 +10,8 @@ const int blue = 38;//Pin P3.3
 const int green = 37;//Pin P3.6
 
 //Settings
-const bool verbose = false;
-const int measurementDuration = 20; //how many miliseconds to measure current for during the chronoamp measurement
+const bool verbose = true;
+const int measurementDuration = 50; //how many miliseconds to measure current for during the chronoamp measurement
 const int averageDuration = 10; //how many miliseconds of data over to get the time-averaged current for a chronoamp measurement
 
 const int BASELINE_LIST_LENGTH = 100; //The length of the moving median used to calculate the baseline
@@ -248,6 +248,9 @@ float chronoamp() {
   long unsigned int currentTime = 0;
   long unsigned int lastTime = 0;
   long unsigned int thisTime = 0;
+  if (verbose){
+    Serial.println("Chronoamp");
+  }
   digitalWrite(potential, HIGH);
   while (startTime + measurementDuration > millis()) {
     double v = analogRead(sensorPin);
